@@ -55,4 +55,18 @@ export default class SquadHandler {
 
     res.status(200).json(squad.data);
   }
+
+  public async getAllMembersSquad(req: Request, res: Response) {
+    const squadId = req.params.team_id;
+
+    const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(
+      squadId
+    );
+    if (squad.status !== 200)
+      return res.status(squad.status).json({ errors: squad.errors });
+
+    res.status(200).json(squad.data);
+  }
+
+
 }

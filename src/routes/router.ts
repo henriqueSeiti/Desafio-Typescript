@@ -7,15 +7,15 @@ const user = new UserHandler();
 const squad = new SquadHandler();
 
 // Rotas GET
-router.get("/users", user.getAll.bind(user));
+router.get("/users", user.getAll.bind(user)); //FEITA
 router.get("/users/me");
 router.get("/users/:user_id", user.getById.bind(user));
 router.get("/teams/", squad.getAll.bind(squad));
 router.get("/teams/:team_id", squad.getById.bind(squad));
-router.get("/teams/:team_id/members");
+router.get("/teams/:team_id/members", squad.getAllMembersSquad.bind(squad));
 
 // Rotas POST
-router.post("/login");
+router.post("/login", user.login.bind(user));
 router.post("/users", user.post.bind(user));
 router.post("/teams", squad.post.bind(squad));
 router.post("/teams/:team_id/member/:user_id", user.addMemberToTeam.bind(user));
