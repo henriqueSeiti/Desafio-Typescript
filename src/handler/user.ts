@@ -67,4 +67,27 @@ export default class UserHandler {
 
     res.status(200).json(result.data);
   }
+
+  public async login(req:Request, res:Response) {
+    const user: IUser = req.body;
+    if (!user || !user.email || !user.password) {
+      res.status(400).json({ error: "Dados incompletos" });
+      return;
+    }
+
+    const responseServ: IResponse<IUser> = await this.repository.login(user);
+    if (responseServ.status === 201) {
+      const sessionId = req.sessionID ;
+      res.cookie('token', sessionId, { 
+        maxAge: 900000, 
+        httpOnly: true }
+      );
+      return res.status(201).json({
+        token: sessionId
+      });
+    } else {
+      res.status(responseServ.status).json({ error: responseServ.errors });
+    }
+  }
+
 }

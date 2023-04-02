@@ -12,7 +12,7 @@ export default class UserRepository {
 
   public async getAllUsers(): Promise<IResponse<Array<IUser[]>>> {
     try {
-      const queryText: string = `SELECT * FROM "user";`;
+      const queryText: string = `SELECT * FROM users`;
       const getUsers: QueryResult<Array<IUser>> = await this.db.pool.query(
         queryText
       );
@@ -103,4 +103,28 @@ export default class UserRepository {
       return res;
     }
   }
+
+  public async login(user: IUser): Promise<IResponse<IUser>> {
+    try {
+      const queryText: string = `SELECT id FROM users WHERE email = $1 AND password = $2;`;
+      const values: Array<string> = [user.email, user.password];
+
+      const verifyUser: QueryResult<IUser> = await this.db.pool.query(
+        queryText,
+        values
+      );
+      const res: IResponse<IUser> = {
+        status: 201,
+        data: verifyUser.rows[0],
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
 }
