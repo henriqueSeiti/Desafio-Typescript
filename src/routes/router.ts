@@ -7,18 +7,18 @@ const user = new UserHandler();
 const squad = new SquadHandler();
 
 // Rotas GET
-router.get("/users", user.get.bind(user));
+router.get("/users", user.getAll.bind(user));
 router.get("/users/me");
-router.get("/users/:user_id");
-router.get("/teams/", squad.get.bind(squad));
-router.get("/teams/:team_id");
-router.get("/teams/:team_id/members")
+router.get("/users/:user_id", user.getById.bind(user));
+router.get("/teams/", squad.getAll.bind(squad));
+router.get("/teams/:team_id", squad.getById.bind(squad));
+router.get("/teams/:team_id/members");
 
 // Rotas POST
 router.post("/login");
-router.post("/users")
-router.post("/teams")
-router.post("/teams/:team_id/member/:user_id")
+router.post("/users", user.post.bind(user));
+router.post("/teams", squad.post.bind(squad));
+router.post("/teams/:team_id/member/:user_id", user.addMemberToTeam.bind(user));
 
 // Rotas PATCH
 router.patch("/users/:user_id");
@@ -28,6 +28,6 @@ router.patch("/teams/:team_id");
 router.delete("/users/:user_id");
 router.delete("/teams/:teams_id");
 router.delete("/teams/:team_id/member/:user_id");
-router.delete("/logout")
+router.delete("/logout");
 
 export { router };

@@ -1,50 +1,106 @@
-import dbConnect from '../database/database';
-import { QueryResult } from 'pg';
-import { IUser, IResponseUser } from '../interfaces/interfaces';
-import User from '../models/user';
+import { UUID } from "crypto";
+import dbConnect from "../database/database";
+import { QueryResult } from "pg";
+import { IUser, IResponse } from "../interfaces/interfaces";
 
 export default class UserRepository {
-    private db: dbConnect;
+  private db: dbConnect;
 
-    constructor() {
-        this.db = new dbConnect();
+  constructor() {
+    this.db = new dbConnect();
+  }
+
+  public async getAllUsers(): Promise<IResponse<Array<IUser[]>>> {
+    try {
+      const queryText: string = `SELECT * FROM "user";`;
+      const getUsers: QueryResult<Array<IUser>> = await this.db.pool.query(
+        queryText
+      );
+
+      const res: IResponse<Array<IUser[]>> = {
+        status: 200,
+        data: getUsers.rows,
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
     }
+  }
 
-    public async getUsers() {
-        try {
-            const queryText: string = `SELECT * FROM "user";`;
-            const getUsers: QueryResult<Array<IUser>> =
-                await this.db.pool.query(queryText);
+  public async getUserById(userId: string): Promise<IResponse<IUser>> {
+    try {
+      const queryText = `SELECT * FROM "user" WHERE id = $1`;
+      const result = await this.db.pool.query(queryText, [userId]);
 
-            const res: IResponseUser<Array<IUser[]>> = {
-                status: 200,
-                data: getUsers.rows,
-            };
-            return res;
-            
-        } catch (err) {
-            const res: IResponseUser<any> = {
-                status: 500,
-                errors: err,
-            };
-            return res;
-        }
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "User not found.",
+        };
+        return res;
+      }
+
+      const squad: IUser = result.rows[0];
+      const res: IResponse<IUser> = {
+        status: 200,
+        data: squad,
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
     }
+  }
 
-    // public async createUser(user: User) {
-    //     try {
-    //         const query: string = `INSERT INTO "users" (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING *`;
-    //         const values : Array<string> = [
-    //             user.id,
-    //             user.name,
-    //             user.email,
-    //             user.password,
-    //         ];
+  public async createUser(user: IUser): Promise<IResponse<IUser>> {
+    try {
+      const queryText: string = `INSERT INTO "user" (name, email, password) VALUES ($1, $2, $3) RETURNING *;`;
+      const values: Array<string> = [user.username, user.email, user.password];
+      const newUser: QueryResult<IUser> = await this.db.pool.query(
+        queryText,
+        values
+      );
 
-    //         const userData : QueryResult<Array<IUser>> = await this.db.pool.query(query, values);
-    //     }
-    //     catch (err) {
+      const res: IResponse<IUser> = {
+        status: 201,
+        data: newUser.rows[0],
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
 
-    //     }
-    // }
+  public async updateUserSquad(
+    userId: string,
+    teamId: string
+  ): Promise<IResponse<any>> {
+    try {
+      const queryText = `UPDATE "user" SET squad = $1 WHERE id = $2`;
+      await this.db.pool.query(queryText, [teamId, userId]);
+
+      const res: IResponse<any> = {
+        status: 200,
+        data: "User squad updated successfully.",
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
 }
