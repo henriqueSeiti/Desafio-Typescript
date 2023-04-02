@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { IResponse, ISquad } from "../interfaces/interfaces";
 import SquadRepository from "../repositories/squadRepository";
+import UserRepository from "../repositories/userRepository";
 
 export default class SquadHandler {
   private repository: SquadRepository;
@@ -9,13 +10,18 @@ export default class SquadHandler {
     this.repository = new SquadRepository();
   }
 
-  public async post(req: Request, res: Response): Promise<void> {
+  public async post(req: Request, res: Response) {
     const squad: ISquad = req.body;
 
     if (!squad || !squad.name || !squad.leader) {
       res.status(400).json({ error: "Dados incompletos" });
       return;
     }
+
+    const userRepository = new UserRepository();
+    const leader = await userRepository.getUserById(squad.leader);
+    if (leader.status !== 200 || !leader?.data?.is_admin)
+      return res.status(400).json({ error: "Usuário não é um administrador" });
 
     const response: IResponse<ISquad> = await this.repository.createSquad(
       squad
