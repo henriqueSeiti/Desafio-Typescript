@@ -102,6 +102,33 @@ export default class SquadHandler {
 
     res.status(200).json(squad.data);
   }
+  
+  public async updateSquadById(req:Request, res:Response) {
+    const cookie = req.cookies['token'];
+    const squadId = req.params.team_id;
+    const { id } = req.params;  
 
 
+    if (!cookie) {
+      return res.status(400).json({ error: "Usuário deslogado" });
+    }
+
+    const squad = await this.repository.getSquadById(squadId);
+    console.log(squad.data?.leader, cookie.user_id);
+
+    
+
+    if (!cookie.is_admin && squad.data?.leader != cookie.user_id ){
+      return res.status(400).json({ error: "Usuario não é admin ou lider desse time"})
+    }
+    
+    const { teamName, leader } = req.body;
+
+    const response = await this.repository.updateTeamsInfos(teamName, leader, id);
+ 
+    res.status(response.status).json({messege: response.data});
+
+  }
 }
+
+

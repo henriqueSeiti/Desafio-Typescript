@@ -1,6 +1,7 @@
 import Router from "express";
 import UserHandler from "../handler/user";
 import SquadHandler from "../handler/squad";
+import tokenVerify from "../middleware/tokenVerify";
 
 const router = Router();
 const user = new UserHandler();
@@ -13,6 +14,8 @@ router.get("/users/:user_id", user.getById.bind(user));
 router.get("/teams/", squad.getAll.bind(squad));
 router.get("/teams/:team_id", squad.getById.bind(squad));
 router.get("/teams/:team_id/members", squad.getAllMembersSquad.bind(squad));
+// router.get("/test", user.teste);
+
 
 // Rotas POST
 router.post("/login", user.login.bind(user));
@@ -21,8 +24,8 @@ router.post("/teams", squad.post.bind(squad));
 router.post("/teams/:team_id/member/:user_id", user.addMemberToTeam.bind(user));
 
 // Rotas PATCH
-router.patch("/users/:user_id");
-router.patch("/teams/:team_id");
+router.patch("/users/:user_id", tokenVerify, user.updateUserById.bind(user));
+router.patch("/teams/:team_id", tokenVerify, squad.updateSquadById.bind(squad));
 
 // Rotas DELETE
 router.delete("/users/:user_id");
