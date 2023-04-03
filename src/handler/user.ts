@@ -5,6 +5,7 @@ import SquadRepository from "../repositories/squadRepository";
 import UserRepository from "../repositories/userRepository";
 import cookieParser from 'cookie-parser';
 
+
 export default class UserHandler {
   private repository: UserRepository;
 
@@ -32,6 +33,7 @@ export default class UserHandler {
   public async getAll(req: Request, res: Response) {
 
     const cookie = req.cookies['token'];
+    console.log(cookie);
 
     if (!cookie) {
       return res.status(400).json({ error: "Usuário deslogado" });
@@ -135,4 +137,25 @@ export default class UserHandler {
     return res.status(200).send("LogOut bem sucedido!");
   }
 
+  public async updateUserById(req:Request, res:Response) {
+    const cookie = req.cookies['token'];
+
+    const { user_id:id } = req.params;  
+    if (!id || id == "") {
+      return res.status(400).json({ error: "id não pode ser vazio ou nulo"})
+    }
+
+    if (id != cookie.user_id) {
+      return res.status(400).json({ error: "id forcecido não corresponde ao usuario logado"})
+    }
+
+    const { userName, password } = req.body;
+
+    const response = await this.repository.updateUserInfos(userName, password, id);
+ 
+    // console.log(cookie);
+    console.log(response)
+    res.status(response.status).json({messege: response.data});
+
+  }
 }
