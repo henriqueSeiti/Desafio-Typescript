@@ -11,11 +11,10 @@ export default class SquadRepository {
 
   public async getAllSquads(): Promise<IResponse<Array<ISquad[]>>> {
     try {
-      const queryText: string = `SELECT * FROM "squad";`;
+      const queryText: string = `SELECT * FROM teams;`;
       const getUsers: QueryResult<Array<ISquad>> = await this.db.pool.query(
         queryText
       );
-
       const res: IResponse<Array<ISquad[]>> = {
         status: 200,
         data: getUsers.rows,
@@ -32,7 +31,7 @@ export default class SquadRepository {
 
   public async getSquadById(teamId: string): Promise<IResponse<ISquad>> {
     try {
-      const queryText = `SELECT * FROM "squad" WHERE id = $1`;
+      const queryText = `SELECT * FROM teams WHERE id = $1`;
       const result = await this.db.pool.query(queryText, [teamId]);
 
       if (result.rowCount === 0) {
@@ -60,7 +59,7 @@ export default class SquadRepository {
 
   public async createSquad(squad: ISquad): Promise<IResponse<ISquad>> {
     try {
-      const queryText: string = `INSERT INTO "squad" (name, leader) VALUES ($1, $2) RETURNING *;`;
+      const queryText: string = `INSERT INTO teams (name, leader) VALUES ($1, $2) RETURNING *;`;
       const values: Array<string> = [squad.name, squad.leader];
       const newSquad: QueryResult<ISquad> = await this.db.pool.query(
         queryText,
@@ -80,4 +79,33 @@ export default class SquadRepository {
       return res;
     }
   }
+
+  public async getAllMembersSquad(teamId: string): Promise<IResponse<ISquad>> {
+    try {
+      const queryText = `SELECT * FROM users WHERE squad = $1`;
+      const result = await this.db.pool.query(queryText, [teamId]);
+
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "Squad not found.",
+        };
+        return res;
+      }
+
+      const squad: any= result.rows;
+      const res: IResponse<ISquad> = {
+        status: 200,
+        data: squad,
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
 }
