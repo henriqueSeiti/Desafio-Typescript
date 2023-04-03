@@ -49,6 +49,21 @@ export default class UserHandler {
     res.status(200).json(users.data);
   }
 
+  public async getMyData(req: Request, res: Response) {
+    const cookie = req.cookies['token'];
+    
+    if (!cookie) {
+      return res.status(400).json({ error: "Usuário deslogado" });
+    }
+    
+    const users: IResponse<IUser> = await this.repository.getMyData(cookie.user_id);
+
+    if (users.status !== 200)
+      return res.status(users.status).json({ errors: users.errors });
+
+    res.status(200).json(users.data);
+  }
+
   public async getById(req: Request, res: Response) {
     const userId = req.params.user_id;
 
@@ -101,12 +116,11 @@ export default class UserHandler {
     if (responseServ.status === 201 && responseServ.data !== undefined) {
       
       const sessionId = req.sessionID ;
-      res.cookie('token', {token: sessionId, is_admin: responseServ.data.is_admin, squad: responseServ.data.squad, is_leader: responseServ.data.is_leader}, { 
+      res.cookie('token', {token: sessionId, user_id: responseServ.data.id, is_admin: responseServ.data.is_admin, squad: responseServ.data.squad, is_leader: responseServ.data.is_leader}, { 
         maxAge: 900000, 
         httpOnly: true }
       );
       const cookie = req.cookies['token'];
-      console.log("cookie ", cookie)
       return res.status(201).json({
         token: sessionId
       });
@@ -114,6 +128,11 @@ export default class UserHandler {
     } else {
       res.status(responseServ.status).json({ error: responseServ.errors });
     }
+  }
+
+  public async logout(req:Request, res:Response) {
+    res.clearCookie("token");
+    return res.status(200).send("LogOut bem sucedido!");
   }
 
 }

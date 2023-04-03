@@ -15,7 +15,6 @@ export default class SquadRepository {
       const getUsers: QueryResult<Array<ISquad>> = await this.db.pool.query(
         queryText
       );
-
       const res: IResponse<Array<ISquad[]>> = {
         status: 200,
         data: getUsers.rows,

@@ -30,6 +30,34 @@ export default class UserRepository {
       return res;
     }
   }
+  
+  public async getMyData(userId: string): Promise<IResponse<IUser>> {
+    try {
+      const queryText = `SELECT * FROM users WHERE id = $1`;
+      const result = await this.db.pool.query(queryText, [userId]);
+
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "User not found.",
+        };
+        return res;
+      }
+
+      const squad: IUser = result.rows[0];
+      const res: IResponse<IUser> = {
+        status: 200,
+        data: squad,
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
 
   public async getUserById(userId: string): Promise<IResponse<IUser>> {
     try {
@@ -125,6 +153,7 @@ export default class UserRepository {
         queryText,
         values
       );
+
       const res: IResponse<IUser> = {
         status: 201,
         data: verifyUser.rows[0],
@@ -141,8 +170,3 @@ export default class UserRepository {
   }
 
 }
-/* verifyUser.rows[0] {
-  id: '123e4567-e89b-12d3-a456-426655440001',
-  is_admin: false,
-  squad: 'bf5af42a-9cb3-4e4f-bd09-6e695e462edf',
-} */
