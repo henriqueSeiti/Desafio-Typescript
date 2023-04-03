@@ -59,9 +59,24 @@ export default class SquadHandler {
   public async getAllMembersSquad(req: Request, res: Response) {
     const squadId = req.params.team_id;
 
+    const cookie = req.cookies['token'];
+
+    if (!cookie) {
+      return res.status(400).json({ errors: "Usuário deslogado" });
+    }
+
+    if (cookie.squad === null && cookie.is_admin === false) {
+      return res.status(400).json({ errors: "Usuário autenticado não pode ter acesso!" });
+    }
+
+    if (cookie.squad !== squadId && cookie.is_admin === false) {
+      return res.status(400).json({ errors: "Você não é membro deste time!" });
+    }
+
     const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(
       squadId
     );
+
     if (squad.status !== 200)
       return res.status(squad.status).json({ errors: squad.errors });
 

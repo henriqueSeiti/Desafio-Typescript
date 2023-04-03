@@ -33,7 +33,7 @@ export default class UserRepository {
 
   public async getUserById(userId: string): Promise<IResponse<IUser>> {
     try {
-      const queryText = `SELECT * FROM "user" WHERE id = $1`;
+      const queryText = `SELECT * FROM users WHERE id = $1`;
       const result = await this.db.pool.query(queryText, [userId]);
 
       if (result.rowCount === 0) {
@@ -106,7 +106,19 @@ export default class UserRepository {
 
   public async login(user: IUser): Promise<IResponse<IUser>> {
     try {
-      const queryText: string = `SELECT id FROM users WHERE email = $1 AND password = $2;`;
+      const queryText: string = `
+      SELECT
+        id,
+        is_admin,
+        squad,
+        EXISTS (
+          SELECT 1
+          FROM teams
+          WHERE leader = users.id
+        ) AS is_leader
+      FROM users
+      WHERE email = $1 AND password = $2;
+      `;
       const values: Array<string> = [user.email, user.password];
 
       const verifyUser: QueryResult<IUser> = await this.db.pool.query(
@@ -117,6 +129,7 @@ export default class UserRepository {
         status: 201,
         data: verifyUser.rows[0],
       };
+      
       return res;
     } catch (err) {
       const res: IResponse<any> = {
@@ -128,3 +141,8 @@ export default class UserRepository {
   }
 
 }
+/* verifyUser.rows[0] {
+  id: '123e4567-e89b-12d3-a456-426655440001',
+  is_admin: false,
+  squad: 'bf5af42a-9cb3-4e4f-bd09-6e695e462edf',
+} */

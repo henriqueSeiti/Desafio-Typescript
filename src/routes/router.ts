@@ -7,7 +7,7 @@ const user = new UserHandler();
 const squad = new SquadHandler();
 
 // Rotas GET
-router.get("/users", user.getAll.bind(user)); //FEITA
+router.get("/users", user.getAll.bind(user));
 router.get("/users/me");
 router.get("/users/:user_id", user.getById.bind(user));
 router.get("/teams/", squad.getAll.bind(squad));
