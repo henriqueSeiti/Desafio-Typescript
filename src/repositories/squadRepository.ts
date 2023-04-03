@@ -107,5 +107,34 @@ export default class SquadRepository {
       return res;
     }
   }
+  	
+  public async delSquadById(teamId: string): Promise<IResponse<ISquad>> {
+    try {
+      const query = `DELETE FROM "teams" WHERE id = $1`;
+      const result = await this.db.pool.query(query, [teamId]);
 
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "Squad not found or already deleted.",
+        };
+        return res;
+      }
+
+      const squad: any = result.rows;
+      const res: IResponse<ISquad> = {
+        status: 200,
+        data: squad,
+      };
+      return res;
+
+    }
+    catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      } 
+      return res;
+    }
+  }
 }

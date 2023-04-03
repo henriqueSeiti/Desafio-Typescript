@@ -103,5 +103,23 @@ export default class SquadHandler {
     res.status(200).json(squad.data);
   }
 
+  public async delSquadById (req: Request, res: Response) {
+    const teamId = req.params.squadId;
+    const cookie = req.cookies['token'];
 
+    if(!cookie) {
+        return res.status(400).json({ errors: 'Usuário deslogado.' })
+    }
+    if (cookie.is_admin === false) {
+        return res.status(400).json({ errors: "Somente administradores têm acesso!" });
+    }
+    if (cookie.is_admin === true) {
+        const squad: IResponse<ISquad> = await this.repository.delSquadById(teamId);
+
+      if (squad.status !== 200) {
+        return res.status(squad.status).json({ errors: squad.errors });
+      }
+      res.status(200).json(squad.data);
+    }
+  }
 }

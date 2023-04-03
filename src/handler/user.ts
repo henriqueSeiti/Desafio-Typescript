@@ -134,5 +134,44 @@ export default class UserHandler {
     res.clearCookie("token");
     return res.status(200).send("LogOut bem sucedido!");
   }
+  
+  public async delUserById( req: Request, res: Response) {
+    const cookie = req.cookies["token"];
+    const userId = req.params.userId;
 
+    if(!cookie) {
+        return res.status(400).json({ errors: 'Usuário deslogado.' })
+    }
+    if (cookie.is_admin === false) {
+        return res.status(400).json({ errors: "Somente administradores têm acesso!" });
+    }
+    if(cookie.is_admin === true) {
+      const user : IResponse<IUser> = await this.repository.delUserById(userId);
+
+      if (user.status !== 200) {
+        return res.status(user.status).json({ errors: user.errors });
+      }
+      res.status(200).json(user.data);
+    }
+  }
+
+  public async removeUserFromSquad( req: Request, res : Response ) {
+    const cookie = req.cookies['token']
+    const userId = req.params.userId;
+
+    if(!cookie) {
+      return res.status(400).json({ errors: 'Usuário deslogado.' })
+    }
+    if (cookie.is_admin === false || cookie.is_leader === false) {
+      return res.status(400).json({ errors: "Somente administradores ou o líder do squad têm acesso!" });
+    }
+
+    if (cookie.is_admin === true || cookie.is_leader === true) {
+      const user: IResponse<IUser> = await this.repository.getUserById(userId);
+        if (user.status !== 200) {
+          return res.status(user.status).json({ errors: user.errors });
+        }
+        res.status(200).json(user.data);
+    }
+  }
 }

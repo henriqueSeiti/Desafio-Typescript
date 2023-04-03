@@ -168,5 +168,61 @@ export default class UserRepository {
       return res;
     }
   }
+    
+  public async delUserById(userId: string) : Promise<IResponse<IUser>> {
+    try {
+      const query = `DELETE FROM "users" WHERE id = $1`;
+      const result = await this.db.pool.query(query, [userId]);
 
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "User not found or already deleted.",
+        };
+        return res;
+      }
+
+      const res : IResponse<any> = {
+        status: 200,
+        data: `User deleted successfully.`
+      }
+      return res;
+      
+
+    } catch (err) {
+      const res : IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
+  public async removeUserFromSquad(userId: string, squadId: string) : Promise<IResponse<IUser>> {
+    try {
+      const query = `UPDATE "user" SET "squad" = null WHERE "id" = $1`;
+      const result = await this.db.pool.query(query, [userId]);
+
+      if (result.rowCount === 0) {
+        const res : IResponse<any> = {
+          status: 404,
+          errors: `User not found or user squad not assigned.`
+        } 
+        return res;
+      }
+
+      const res : IResponse<any> = {
+        status: 200,
+        data: `User removed from squad successfully.`
+      }
+      return res;
+
+      } catch (err) {
+        const res : IResponse<any> = {
+          status: 500,
+          errors: err,
+        }
+        return res;
+    }      
+  }
 }
