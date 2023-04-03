@@ -28,6 +28,6 @@ router.patch("/teams/:team_id");
 router.delete("/users/:user_id");
 router.delete("/teams/:teams_id");
 router.delete("/teams/:team_id/member/:user_id");
-router.delete("/logout");
+router.delete("/logout", user.logout.bind(user));
 
 export { router };

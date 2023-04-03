@@ -90,4 +90,9 @@ export default class UserHandler {
     }
   }
 
+  public async logout(req:Request, res:Response) {
+    res.clearCookie("token");
+    return res.status(200).send("LogOut bem sucedido!");
+  }
+
 }
