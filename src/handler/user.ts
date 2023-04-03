@@ -78,7 +78,7 @@ export default class UserHandler {
     const responseServ: IResponse<IUser> = await this.repository.login(user);
     if (responseServ.status === 201) {
       const sessionId = req.sessionID ;
-      res.cookie('token', sessionId, { 
+      res.cookie('token', {id: sessionId, admin: "true/false"}, { 
         maxAge: 900000, 
         httpOnly: true }
       );
