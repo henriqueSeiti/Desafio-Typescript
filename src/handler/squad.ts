@@ -35,12 +35,8 @@ export default class SquadHandler {
   }
 
   public async getAll(req: Request, res: Response) {
-
     const cookie = req.cookies['token'];
 
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
-    }
 
     if (cookie.is_admin === true || cookie.is_leader === true) {
       const squads: IResponse<Array<ISquad[]>> = await this.repository.getAllSquads();
@@ -58,10 +54,6 @@ export default class SquadHandler {
     const squadId = req.params.team_id;
 
     const cookie = req.cookies['token'];
-
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
-    }
 
     if (cookie.is_admin === true || cookie.is_leader === true || cookie.squad === squadId) {
       const squad: IResponse<ISquad> = await this.repository.getSquadById(squadId);
@@ -81,10 +73,6 @@ export default class SquadHandler {
 
     const cookie = req.cookies['token'];
 
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
-    }
-
     if (cookie.squad === null && cookie.is_admin === false) {
       return res.status(400).json({ errors: "Usuário autenticado não pode ter acesso!" });
     }
@@ -102,6 +90,26 @@ export default class SquadHandler {
 
     res.status(200).json(squad.data);
   }
+  
+  public async updateSquadById(req:Request, res:Response) {
+    const cookie = req.cookies['token'];
+    const squadId = req.params.team_id;
+    const { id } = req.params;  
 
+    const squad = await this.repository.getSquadById(squadId);
+    console.log(squad.data?.leader, cookie.user_id);
 
+    if (!cookie.is_admin && squad.data?.leader != cookie.user_id ){
+      return res.status(400).json({ error: "Usuario não é admin ou lider desse time"})
+    }
+    
+    const { teamName, leader } = req.body;
+
+    const response = await this.repository.updateTeamsInfos(teamName, leader, id);
+ 
+    res.status(response.status).json({messege: response.data});
+
+  }
 }
+
+

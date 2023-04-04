@@ -132,6 +132,33 @@ export default class UserRepository {
     }
   }
 
+
+  public async updateUserInfos(
+    userName: string,
+    password: string,
+    userId: string
+  ){
+
+    try{
+      const queryText = `UPDATE users SET username = $1, password = $2 WHERE id = $3`;
+      await this.db.pool.query(queryText, [userName, password, userId]);
+
+      const res: IResponse<any> = {
+        status: 200,
+        data: "User updated successfully.",
+    };
+    return res;
+    
+    } catch (err) {
+
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
   public async login(user: IUser): Promise<IResponse<IUser>> {
     try {
       const queryText: string = `
