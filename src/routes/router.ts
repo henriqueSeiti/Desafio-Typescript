@@ -28,9 +28,9 @@ router.patch("/users/:user_id", tokenVerify, user.updateUserById.bind(user));
 router.patch("/teams/:team_id", tokenVerify, squad.updateSquadById.bind(squad));
 
 // Rotas DELETE
-router.delete("/users/:user_id");
-router.delete("/teams/:teams_id");
-router.delete("/teams/:team_id/member/:user_id");
+router.delete("/users/:user_id", user.delUserById.bind(user));
+router.delete("/teams/:teams_id", squad.delSquadById.bind(squad));
+router.delete("/teams/:team_id/member/:user_id", user.removeUserFromSquad.bind(user));
 router.delete("/logout", user.logout.bind(user));
 
 export { router };
