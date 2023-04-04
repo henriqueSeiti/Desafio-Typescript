@@ -136,17 +136,22 @@ export default class UserRepository {
   public async updateUserInfos(
     userName: string,
     password: string,
-    userId: string
+    userId: string,
+    email: string,
+    first_name: string,
+    last_name: string,
+    squad: string,
+    is_admin: boolean
   ){
 
-    try{
-      const queryText = `UPDATE "users" SET username = $1, password = $2 WHERE id = $3`;
-      await this.db.pool.query(queryText, [userName, password, userId]);
-
+    try {
+      const queryText = `UPDATE "users" SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5, squad = $6, is_admin = $7 WHERE id = $8`;
+      await this.db.pool.query(queryText, [userName, password, email, first_name, last_name, squad, is_admin, userId]);
+    
       const res: IResponse<any> = {
         status: 200,
         data: "User updated successfully.",
-    };
+      };
     return res;
     
     } catch (err) {
