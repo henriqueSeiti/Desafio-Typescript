@@ -35,33 +35,68 @@ export default class SquadHandler {
   }
 
   public async getAll(req: Request, res: Response) {
-    const squads: IResponse<Array<ISquad[]>> =
-      await this.repository.getAllSquads();
 
-    if (squads.status !== 200)
-      return res.status(squads.status).json({ errors: squads.errors });
+    const cookie = req.cookies['token'];
 
-    res.status(200).json(squads.data);
+    if (!cookie) {
+      return res.status(400).json({ errors: "Usuário deslogado" });
+    }
+
+    if (cookie.is_admin === true || cookie.is_leader === true) {
+      const squads: IResponse<Array<ISquad[]>> = await this.repository.getAllSquads();
+
+      if (squads.status !== 200) return res.status(squads.status).json({ errors: squads.errors });
+      res.status(200).json(squads.data);
+    }
+
+    else {
+      return res.status(400).json({ errors: "Somente administradores e líderes têm acesso" });
+    }
   }
 
   public async getById(req: Request, res: Response) {
     const squadId = req.params.team_id;
 
-    const squad: IResponse<ISquad> = await this.repository.getSquadById(
-      squadId
-    );
-    if (squad.status !== 200)
-      return res.status(squad.status).json({ errors: squad.errors });
+    const cookie = req.cookies['token'];
 
-    res.status(200).json(squad.data);
+    if (!cookie) {
+      return res.status(400).json({ errors: "Usuário deslogado" });
+    }
+
+    if (cookie.is_admin === true || cookie.is_leader === true || cookie.squad === squadId) {
+      const squad: IResponse<ISquad> = await this.repository.getSquadById(squadId);
+
+      if (squad.status !== 200) return res.status(squad.status).json({ errors: squad.errors });
+      res.status(200).json(squad.data);
+    }
+
+    else {
+      return res.status(400).json({ errors: "Somente pessoas autorizadas têm acesso!" });
+    }
+
   }
 
   public async getAllMembersSquad(req: Request, res: Response) {
     const squadId = req.params.team_id;
 
+    const cookie = req.cookies['token'];
+
+    if (!cookie) {
+      return res.status(400).json({ errors: "Usuário deslogado" });
+    }
+
+    if (cookie.squad === null && cookie.is_admin === false) {
+      return res.status(400).json({ errors: "Usuário autenticado não pode ter acesso!" });
+    }
+
+    if (cookie.squad !== squadId && cookie.is_admin === false) {
+      return res.status(400).json({ errors: "Você não é membro deste time!" });
+    }
+
     const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(
       squadId
     );
+
     if (squad.status !== 200)
       return res.status(squad.status).json({ errors: squad.errors });
 

@@ -9,6 +9,7 @@ export interface IUser {
   last_name?: string;
   squad?: UUID;
   is_admin?: boolean;
+  is_leader?: boolean;
 }
 
 export interface ISquad {

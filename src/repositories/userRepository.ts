@@ -30,10 +30,38 @@ export default class UserRepository {
       return res;
     }
   }
+  
+  public async getMyData(userId: string): Promise<IResponse<IUser>> {
+    try {
+      const queryText = `SELECT * FROM users WHERE id = $1`;
+      const result = await this.db.pool.query(queryText, [userId]);
+
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "User not found.",
+        };
+        return res;
+      }
+
+      const squad: IUser = result.rows[0];
+      const res: IResponse<IUser> = {
+        status: 200,
+        data: squad,
+      };
+      return res;
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
 
   public async getUserById(userId: string): Promise<IResponse<IUser>> {
     try {
-      const queryText = `SELECT * FROM "user" WHERE id = $1`;
+      const queryText = `SELECT * FROM users WHERE id = $1`;
       const result = await this.db.pool.query(queryText, [userId]);
 
       if (result.rowCount === 0) {
@@ -106,17 +134,31 @@ export default class UserRepository {
 
   public async login(user: IUser): Promise<IResponse<IUser>> {
     try {
-      const queryText: string = `SELECT id FROM users WHERE email = $1 AND password = $2;`;
+      const queryText: string = `
+      SELECT
+        id,
+        is_admin,
+        squad,
+        EXISTS (
+          SELECT 1
+          FROM teams
+          WHERE leader = users.id
+        ) AS is_leader
+      FROM users
+      WHERE email = $1 AND password = $2;
+      `;
       const values: Array<string> = [user.email, user.password];
 
       const verifyUser: QueryResult<IUser> = await this.db.pool.query(
         queryText,
         values
       );
+
       const res: IResponse<IUser> = {
         status: 201,
         data: verifyUser.rows[0],
       };
+      
       return res;
     } catch (err) {
       const res: IResponse<any> = {
