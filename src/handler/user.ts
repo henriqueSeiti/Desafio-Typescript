@@ -5,6 +5,7 @@ import SquadRepository from "../repositories/squadRepository";
 import UserRepository from "../repositories/userRepository";
 import cookieParser from 'cookie-parser';
 
+
 export default class UserHandler {
   private repository: UserRepository;
 
@@ -33,10 +34,6 @@ export default class UserHandler {
 
     const cookie = req.cookies['token'];
 
-    if (!cookie) {
-      return res.status(400).json({ error: "Usuário deslogado" });
-    }
-
     if (cookie.is_admin === false) {
       return res.status(400).json({ error: "Somente administradores têm acesso!" });
     }
@@ -52,10 +49,6 @@ export default class UserHandler {
   public async getMyData(req: Request, res: Response) {
     const cookie = req.cookies['token'];
     
-    if (!cookie) {
-      return res.status(400).json({ error: "Usuário deslogado" });
-    }
-    
     const users: IResponse<IUser> = await this.repository.getMyData(cookie.user_id);
 
     if (users.status !== 200)
@@ -68,10 +61,6 @@ export default class UserHandler {
     const userId = req.params.user_id;
 
     const cookie = req.cookies['token'];
-
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
-    }
 
     if (cookie.is_admin === true || cookie.is_leader === true) {
       const user: IResponse<IUser> = await this.repository.getUserById(userId);
@@ -120,7 +109,7 @@ export default class UserHandler {
         maxAge: 900000, 
         httpOnly: true }
       );
-      const cookie = req.cookies['token'];
+
       return res.status(201).json({
         token: sessionId
       });
@@ -173,5 +162,25 @@ export default class UserHandler {
         }
         res.status(200).json(user.data);
     }
+  }
+  
+  public async updateUserById(req:Request, res:Response) {
+    const cookie = req.cookies['token'];
+
+    const { user_id:id } = req.params;  
+    if (!id || id == "") {
+      return res.status(400).json({ error: "ID não pode ser vazio ou nulo"})
+    }
+
+    if (id != cookie.user_id) {
+      return res.status(400).json({ error: "ID fornecido não corresponde ao usuario logado"})
+    }
+
+    const { userName, password } = req.body;
+
+    const response = await this.repository.updateUserInfos(userName, password, id);
+
+    res.status(response.status).json({message: response.data});
+
   }
 }

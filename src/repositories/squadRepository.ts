@@ -137,4 +137,31 @@ export default class SquadRepository {
       return res;
     }
   }
+
+  public async updateTeamsInfos(
+    leader: string,
+    teamName: string,
+    teamId: string
+  ){
+    try{
+      const queryText = `UPDATE "teams" SET leader = $1, name = $2 WHERE id = $3`;
+      await this.db.pool.query(queryText, [leader, teamName, teamId]);
+
+      const res: IResponse<any> = {
+        status: 200,
+        data: "Squad updated successfully.",
+    };
+    return res;
+    
+    } catch (err) {
+
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
+
 }
