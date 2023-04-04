@@ -140,7 +140,7 @@ export default class UserRepository {
   ){
 
     try{
-      const queryText = `UPDATE "users" SET username = $1, password = $2 WHERE id = $3`;
+      const queryText = `UPDATE users SET username = $1, password = $2 WHERE id = $3`;
       await this.db.pool.query(queryText, [userName, password, userId]);
 
       const res: IResponse<any> = {
@@ -158,10 +158,6 @@ export default class UserRepository {
       return res;
     }
   }
-
- 
-
-
 
   public async login(user: IUser): Promise<IResponse<IUser>> {
     try {
