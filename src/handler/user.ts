@@ -149,9 +149,9 @@ export default class UserHandler {
       return res.status(400).json({ error: "id forcecido não corresponde ao usuario logado"})
     }
 
-    const { userName, password, email, first_name, last_name, squad, is_admin } = req.body;
+    const { userName, password, email, first_name, last_name, squad } = req.body;
 
-    const response = await this.repository.updateUserInfos(userName, password, id, email, first_name, last_name, squad,  is_admin);
+    const response = await this.repository.updateUserInfos(userName, password, id, email, first_name, last_name, squad);
  
     console.log(cookie);
     console.log(response)

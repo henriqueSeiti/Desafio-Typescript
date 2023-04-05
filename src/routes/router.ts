@@ -7,6 +7,17 @@ const router = Router();
 const user = new UserHandler();
 const squad = new SquadHandler();
 
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Retorna todos os usuários.
+ *     description: Retorna uma lista de todos os usuários cadastrados no sistema.
+ *     responses:
+ *       200:
+ *         description: Lista de usuários.
+ */
+
 // Rotas GET
 router.get("/users", user.getAll.bind(user));
 router.get("/users/me", user.getMyData.bind(user));
@@ -14,7 +25,6 @@ router.get("/users/:user_id", user.getById.bind(user));
 router.get("/teams/", squad.getAll.bind(squad));
 router.get("/teams/:team_id", squad.getById.bind(squad));
 router.get("/teams/:team_id/members", squad.getAllMembersSquad.bind(squad));
-// router.get("/test", user.teste);
 
 
 // Rotas POST

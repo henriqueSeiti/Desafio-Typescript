@@ -141,16 +141,49 @@ export default class UserRepository {
     first_name: string,
     last_name: string,
     squad: string,
-    is_admin: boolean
   ){
 
     try {
-      const queryText = `UPDATE "users" SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5, squad = $6, is_admin = $7 WHERE id = $8`;
-      await this.db.pool.query(queryText, [userName, password, email, first_name, last_name, squad, is_admin, userId]);
+      let queryText = `UPDATE "users" SET `;
+      const params = [userId];
+    
+      // Verifica se cada campo é fornecido e adiciona à consulta SQL e parâmetros
+      if (userName) {
+        queryText += `username = $2, `;
+        params.push(userName);
+      }
+      if (password) {
+        queryText += `password = $${params.length + 1}, `;
+        params.push(password);
+      }
+      if (email) {
+        queryText += `email = $${params.length + 1}, `;
+        params.push(email);
+      }
+      if (first_name) {
+        queryText += `first_name = $${params.length + 1}, `;
+        params.push(first_name);
+      }
+      if (last_name) {
+        queryText += `last_name = $${params.length + 1}, `;
+        params.push(last_name);
+      }
+      if (squad) {
+        queryText += `squad = $${params.length + 1}, `;
+        params.push(squad);
+      }
+
+    
+      // Remove a vírgula extra no final da string da consulta
+      queryText = queryText.slice(0, -2);
+    
+      // Adiciona a cláusula WHERE para a consulta e executa a consulta
+      queryText += ` WHERE id = $1`;
+      await this.db.pool.query(queryText, params);
     
       const res: IResponse<any> = {
         status: 200,
-        data: "User updated successfully.",
+        data: "Usuário atualizado com sucesso.",
       };
     return res;
     
