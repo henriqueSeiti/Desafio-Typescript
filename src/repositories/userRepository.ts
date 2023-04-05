@@ -161,12 +161,12 @@ export default class UserRepository {
     teamId: string
   ): Promise<IResponse<any>> {
     try {
-      const queryText = `UPDATE "users" SET squad = $1 WHERE id = $2`;
-      await this.db.pool.query(queryText, [teamId, userId]);
+      const queryText = `UPDATE "users" SET squad = $1 WHERE id = $2 RETURNING id, username, email, first_name, last_name, is_admin, squad`;
+      const result : QueryResult<IUser> = await this.db.pool.query(queryText, [teamId, userId]);
 
       const res: IResponse<any> = {
         status: 200,
-        data: "Usuário atualizado com sucesso",
+        data: result.rows[0],
       };
       return res;
       
@@ -179,16 +179,25 @@ export default class UserRepository {
     }
   }
 
-  public async updateUserInfos(id: string, userName: string, email: string, password: string){
-    try{
-      const queryText = `UPDATE users SET username = $1, password = $2, email = $3 WHERE id = $4 RETURNING *`;
-      const updateUser: QueryResult<IUser> = await this.db.pool.query(queryText, [userName, password, email, id]);
 
+  public async updateUserInfos(
+    userName: string,
+    password: string,
+    userId: string,
+    email: string,
+    first_name: string,
+    last_name: string,
+  ){
+
+    try {
+      const queryText = `UPDATE "users" SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5, WHERE id = $6`;
+      const result : QueryResult<IUser> =await this.db.pool.query(queryText, [userName, password, email, first_name, last_name, userId]);
+    
       const res: IResponse<any> = {
         status: 200,
-        data: updateUser.rows[0],
-    };
-    return res;
+        data: result.rows[0],
+      };
+      return res;
     
     } catch (err) {
 
@@ -247,7 +256,7 @@ export default class UserRepository {
     
   public async delUserById(userId: string) : Promise<IResponse<IUser>> {
     try {
-      const query = `DELETE FROM "users" WHERE id = $1`;
+      const query = `DELETE FROM "users" WHERE id = $1 RETURNING id, username, email, first_name, last_name, is_admin, squad`;
       const result = await this.db.pool.query(query, [userId]);
 
       if (result.rowCount === 0) {
@@ -275,7 +284,7 @@ export default class UserRepository {
 
   public async removeUserFromSquad(userId: string) : Promise<IResponse<IUser>> {
     try {
-      const query = `UPDATE "users" SET "squad" = null WHERE "id" = $1 RETURNING *`;
+      const query = `UPDATE "users" SET "squad" = null WHERE "id" = $1 RETURNING id, username, email, first_name, last_name, is_admin, squad`;
       const result = await this.db.pool.query(query, [userId]);
 
       if (result.rowCount === 0) {

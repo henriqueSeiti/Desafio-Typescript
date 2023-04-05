@@ -8,17 +8,17 @@ const user = new UserHandler();
 const squad = new SquadHandler();
 
 // Rotas GET
-router.get("/users/me", tokenVerify, user.getMyData.bind(user)); //OK
-router.get("/users", tokenVerify, user.getAll.bind(user)); //OK
-router.get("/users/:user_id", tokenVerify, user.getById.bind(user)); //ok
-router.get("/teams/", tokenVerify, squad.getAll.bind(squad)); //ok
-router.get("/teams/:team_id", tokenVerify, squad.getById.bind(squad)); //ok
-router.get("/teams/:team_id/members", tokenVerify, squad.getAllMembersSquad.bind(squad)); //ok
+router.get("/users/me", tokenVerify, user.getMyData.bind(user));
+router.get("/users", tokenVerify, user.getAll.bind(user));
+router.get("/users/:user_id", tokenVerify, user.getById.bind(user));
+router.get("/teams/", tokenVerify, squad.getAll.bind(squad));
+router.get("/teams/:team_id", tokenVerify, squad.getById.bind(squad));
+router.get("/teams/:team_id/members", tokenVerify, squad.getAllMembersSquad.bind(squad));
 
 // Rotas POST
-router.post("/login", user.login.bind(user)); //ok
-router.post("/users", tokenVerify, user.post.bind(user)); //ok
-router.post("/teams", tokenVerify, squad.post.bind(squad)); //ok
+router.post("/login", user.login.bind(user));
+router.post("/users", tokenVerify, user.post.bind(user));
+router.post("/teams", tokenVerify, squad.post.bind(squad));
 router.post("/teams/:team_id/member/:user_id", tokenVerify, user.addMemberToTeam.bind(user));
 
 // Rotas PATCH

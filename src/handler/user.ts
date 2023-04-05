@@ -96,7 +96,7 @@ export default class UserHandler {
 
     const squadRepository = new SquadRepository();
 
-    if(cookie.is_admin === false || (cookie.is_leader === true && cookie.squad !== teamId)) {
+    if((!cookie.is_admin || !cookie.is_leader) || (cookie.is_leader && cookie.squad !== teamId)) {
       return res.status(400).json({ errors: 'Usuário sem premissão.' })
     }
 
@@ -153,16 +153,15 @@ export default class UserHandler {
     const userId = req.params.userId;
 
     if (cookie.is_admin === false) {
-        return res.status(400).json({ errors: "Somente administradores têm acesso!" });
+      return res.status(400).json({ errors: "Somente administradores têm acesso!" });
     }
-    if(cookie.is_admin === true) {
-      const user : IResponse<IUser> = await this.repository.delUserById(userId);
+    
+    const user : IResponse<IUser> = await this.repository.delUserById(userId);
 
-      if (user.status !== 200) {
-        return res.status(user.status).json({ errors: user.errors });
-      }
-      res.status(200).json(user.data);
+    if (user.status !== 200) {
+      return res.status(user.status).json({ errors: user.errors });
     }
+    res.status(200).json(user.data);
   }
 
   public async removeUserFromSquad( req: Request, res : Response ) {
@@ -170,8 +169,8 @@ export default class UserHandler {
     const userId = req.params.user_id;
     const squadId = req.params.team_id;
     
-    if ((!cookie.is_admin && !cookie.is_leader) || (cookie.is_leader && cookie.squad !== squadId) ){
-      return res.status(400).json({ error: "Vôce não possui permissão para isso!"})
+    if ((!cookie.is_admin || !cookie.is_leader) || (cookie.is_leader && cookie.squad !== squadId)){
+      return res.status(400).json({ error: "Você não possui permissão para isso!"})
     }
 
     const user: IResponse<IUser> = await this.repository.removeUserFromSquad(userId);
@@ -194,18 +193,16 @@ export default class UserHandler {
       return res.status(400).json({ error: "Dados inválidos" });
     }
 
-    const validate: Validator = new Validator (user.username, user.first_name, user.last_name, user.password, user.email);
+    if (id !== cookie.user_id) {
+      return res.status(400).json({ error: "Você não possui permissão para isso!"})
+    }
 
+    const validate: Validator = new Validator (user.username, user.first_name, user.last_name, user.password, user.email);
     if (validate.fail)
     return res.status(400).json({ error: validate.message });
 
-    if (id !== cookie.user_id) {
-      return res.status(400).json({ error: "ID fornecido não corresponde ao usuario logado"})
-    }
-
-    const response = await this.repository.updateUserInfos(id, user.username, user.email, user.password);
+    const response = await this.repository.updateUserInfos(user.username, user.password, id, user.email,user.first_name, user.last_name);
 
     res.status(response.status).json({message: response.data});
-
   }
 }

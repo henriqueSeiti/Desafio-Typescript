@@ -122,26 +122,35 @@ export default class SquadRepository {
   	
   public async delSquadById(teamId: string): Promise<IResponse<ISquad>> {
     try {
-      const query = `DELETE FROM "teams" WHERE id = $1`;
-      const result = await this.db.pool.query(query, [teamId]);
+      const verifyTeam = `SELECT * FROM users WHERE squad = $1`
+      const resultVerifyTeam = await this.db.pool.query(verifyTeam, [teamId]);
 
-      if (result.rowCount === 0) {
-        const res: IResponse<any> = {
-          status: 404,
-          errors: "Squad not found or already deleted.",
-        };
+      if (resultVerifyTeam.rows.length == 1) {
+        const query = `DELETE FROM teams WHERE id = $1`;
+        const result = await this.db.pool.query(query, [teamId]);
+
+        if (result.rowCount === 0) {
+          const res: IResponse<any> = {
+            status: 404,
+            errors: "Time não encontrado!",
+          };
+          return res;
+        }
+        const squad: any = result.rows;
+        const res: IResponse<ISquad> = {
+          status: 200,
+          data: squad,
+        }
         return res;
-      }
+      } 
 
-      const squad: any = result.rows;
-      const res: IResponse<ISquad> = {
-        status: 200,
-        data: squad,
+      const res: IResponse<any> = {
+        status: 404,
+        errors: "Não foi encontrado o time ou ainda há membros.",
       };
       return res;
-
-    }
-    catch (err) {
+        
+    } catch (err) {
       const res: IResponse<any> = {
         status: 500,
         errors: err,
