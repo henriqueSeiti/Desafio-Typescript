@@ -32,3 +32,4 @@ router.delete("/teams/:teams_id", squad.delSquadById.bind(squad));
 router.delete("/logout", user.logout.bind(user));
 
 export { router };
+ 

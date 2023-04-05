@@ -22,18 +22,11 @@ export default class SquadHandler {
       return res.status(400).json({ error: "Verifique os Dados!" });
     }
 
-    if(!squad.leader){
-      const validate: SquadValidator = new SquadValidator (squad.name);
-      if (validate.fail)
+    const validate: SquadValidator = new SquadValidator (squad.name, squad.leader);
+    if (validate.fail){
       return res.status(400).json({ error: validate.message });
     }
-
-    if(squad.leader){
-      const validate: SquadValidator = new SquadValidator (squad.name, squad.leader);
-      if (validate.fail)
-      return res.status(400).json({ error: validate.message });
-    }
-
+      
     const response: IResponse<ISquad> = await this.repository.createSquad(squad);
 
     if (response.status === 201) {
@@ -80,17 +73,17 @@ export default class SquadHandler {
     const squadId = req.params.team_id;
     const cookie = req.cookies['token'];
 
-    if(!cookie.is_admin || (cookie.is_leader && cookie.squad !== squadId) || cookie.squad !== squadId){
-      return res.status(400).json({ errors: "Você não possui autorização para isso!" });
+    if(cookie.is_admin || cookie.squad === squadId){
+      const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(squadId);
+
+      if (squad.status !== 200){
+        return res.status(squad.status).json({ errors: squad.errors });
+      }
+        
+      return res.status(200).json(squad.data); 
     }
 
-    const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(squadId);
-
-    if (squad.status !== 200){
-      return res.status(squad.status).json({ errors: squad.errors });
-    }
-      
-    res.status(200).json(squad.data);
+    return res.status(400).json({ errors: "Você não possui autorização para isso!" });
   }
   
   public async updateSquadById(req:Request, res:Response) {
@@ -119,14 +112,13 @@ export default class SquadHandler {
   }
   
   public async delSquadById (req: Request, res: Response) {
-    const teamId = req.params.squadId;
+    const teamId = req.params.teams_id;
     const cookie = req.cookies['token'];
 
-    if (!cookie.is_admin === false) {
+    if (!cookie.is_admin) {
       return res.status(400).json({ errors: "Somente administradores têm acesso!" });
     }
 
-    
     const squad: IResponse<ISquad> = await this.repository.delSquadById(teamId);
 
     if (squad.status !== 200) {

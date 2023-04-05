@@ -63,12 +63,8 @@ export default class SquadRepository {
 
   public async createSquad(squad: ISquad): Promise<IResponse<ISquad>> {
     try {
-      const queryText: string = `INSERT INTO "teams" (id, name, leader) VALUES ($1, $2, $3) RETURNING *;`;
-      const values: Array<any> = [uuid(), squad.name, null];
-
-      if(squad.leader){
-        values[2] = squad.leader;
-      }
+      const queryText: string = `INSERT INTO "teams" (id, name, leader) VALUES ($1, $2, $3) RETURNING id, name, leader;`;
+      const values: Array<any> = [uuid(), squad.name, squad.leader];
 
       const newSquad: QueryResult<ISquad> = await this.db.pool.query(
         queryText,
@@ -125,17 +121,15 @@ export default class SquadRepository {
       const verifyTeam = `SELECT * FROM users WHERE squad = $1`
       const resultVerifyTeam = await this.db.pool.query(verifyTeam, [teamId]);
 
-      if (resultVerifyTeam.rows.length == 1) {
-        const query = `DELETE FROM teams WHERE id = $1`;
+      console.log(resultVerifyTeam.rowCount)
+
+      if (resultVerifyTeam.rowCount < 2) {
+        const updateQuery = `UPDATE teams SET leader = $2 WHERE id = $1`;
+        await this.db.pool.query(updateQuery, [teamId, null]);
+        
+        const query = `DELETE FROM teams WHERE id = $1 RETURNING *`;
         const result = await this.db.pool.query(query, [teamId]);
 
-        if (result.rowCount === 0) {
-          const res: IResponse<any> = {
-            status: 404,
-            errors: "Time não encontrado!",
-          };
-          return res;
-        }
         const squad: any = result.rows;
         const res: IResponse<ISquad> = {
           status: 200,
@@ -161,7 +155,7 @@ export default class SquadRepository {
 
   public async updateTeamsInfos(
     teamName: string,
-    leader: string | undefined,
+    leader: string,
     teamId: string
   ){
     try{

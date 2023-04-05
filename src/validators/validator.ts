@@ -73,7 +73,7 @@ export class SquadValidator extends Validate {
     }
 
     private validateLeader(leader: string) {
-        const regex = new RegExp(uuidv4());
+        const regex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
         if (!this.fail)
             this.testData(leader, "[leader]: O leader está inválido", regex);
     }
