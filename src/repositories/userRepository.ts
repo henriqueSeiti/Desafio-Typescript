@@ -1,4 +1,4 @@
-import { UUID } from "crypto";
+import { v4 as uuid } from "uuid";
 import dbConnect from "../database/database";
 import { QueryResult } from "pg";
 import { IUser, IResponse } from "../interfaces/interfaces";
@@ -13,15 +13,14 @@ export default class UserRepository {
   public async getAllUsers(): Promise<IResponse<Array<IUser[]>>> {
     try {
       const queryText: string = `SELECT * FROM users`;
-      const getUsers: QueryResult<Array<IUser>> = await this.db.pool.query(
-        queryText
-      );
+      const getUsers: QueryResult<Array<IUser>> = await this.db.pool.query(queryText);
 
       const res: IResponse<Array<IUser[]>> = {
         status: 200,
         data: getUsers.rows,
       };
       return res;
+
     } catch (err) {
       const res: IResponse<any> = {
         status: 500,
@@ -39,15 +38,14 @@ export default class UserRepository {
       if (result.rowCount === 0) {
         const res: IResponse<any> = {
           status: 404,
-          errors: "User not found.",
+          errors: "Usuario não encontrado.",
         };
         return res;
       }
 
-      const squad: IUser = result.rows[0];
       const res: IResponse<IUser> = {
         status: 200,
-        data: squad,
+        data: result.rows[0],
       };
       return res;
     } catch (err) {
@@ -67,17 +65,64 @@ export default class UserRepository {
       if (result.rowCount === 0) {
         const res: IResponse<any> = {
           status: 404,
-          errors: "User not found.",
+          errors: "Usuario não encontrado.",
         };
         return res;
       }
 
-      const squad: IUser = result.rows[0];
+      const user: IUser = result.rows[0];
       const res: IResponse<IUser> = {
         status: 200,
-        data: squad,
+        data: user,
       };
       return res;
+
+    } catch (err) {
+      const res: IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
+  public async getUserByIdLeader(userId: string, squadId: string): Promise<IResponse<IUser>> {
+    try {
+      const queryTextOne = `SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.is_admin, u.squad
+      FROM users u
+      JOIN teams t ON u.id = t.leader
+      WHERE u.id = $1;`;
+      const resultqueryOne = await this.db.pool.query(queryTextOne, [userId]);
+
+      if (resultqueryOne.rowCount === 0) { // Verificou que não é lider
+        const queryTextTwo = `SELECT id, username, email, first_name, last_name, is_admin, squad
+        FROM users
+        WHERE squad = $1 AND id = $2;`;
+        const resultqueryTwo = await this.db.pool.query(queryTextTwo, [userId, squadId]); 
+        
+        if (resultqueryTwo.rowCount === 0) {
+          const res: IResponse<any> = {
+            status: 404,
+            errors: "Usuario não encontrado.",
+          };
+          return res;
+        }
+
+        const res: IResponse<IUser> = {
+          status: 200,
+          data: resultqueryTwo.rows[0],
+        }
+        return res;
+      } 
+      else {
+        /* Verificou que é lider*/
+        const res: IResponse<IUser> = {
+          status: 200,
+          data: resultqueryOne.rows[0],
+        };
+        return res;
+      }
+
     } catch (err) {
       const res: IResponse<any> = {
         status: 500,
@@ -89,8 +134,8 @@ export default class UserRepository {
 
   public async createUser(user: IUser): Promise<IResponse<IUser>> {
     try {
-      const queryText: string = `INSERT INTO "user" (name, email, password) VALUES ($1, $2, $3) RETURNING *;`;
-      const values: Array<string> = [user.username, user.email, user.password];
+      const queryText: string = `INSERT INTO users (id, username, email, first_name, last_name, password, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;`;
+      const values: Array<any> = [uuid(), user.username, user.email, user.first_name, user.last_name, user.password, false];
       const newUser: QueryResult<IUser> = await this.db.pool.query(
         queryText,
         values
@@ -101,6 +146,7 @@ export default class UserRepository {
         data: newUser.rows[0],
       };
       return res;
+
     } catch (err) {
       const res: IResponse<any> = {
         status: 500,
@@ -115,14 +161,15 @@ export default class UserRepository {
     teamId: string
   ): Promise<IResponse<any>> {
     try {
-      const queryText = `UPDATE "user" SET squad = $1 WHERE id = $2`;
-      await this.db.pool.query(queryText, [teamId, userId]);
+      const queryText = `UPDATE "users" SET squad = $1 WHERE id = $2 RETURNING id, username, email, first_name, last_name, is_admin, squad`;
+      const result : QueryResult<IUser> = await this.db.pool.query(queryText, [teamId, userId]);
 
       const res: IResponse<any> = {
         status: 200,
-        data: "User squad updated successfully.",
+        data: result.rows[0],
       };
       return res;
+      
     } catch (err) {
       const res: IResponse<any> = {
         status: 500,
@@ -139,9 +186,7 @@ export default class UserRepository {
     userId: string,
     email: string,
     first_name: string,
-    last_name: string,
-    squad: string,
-  ){
+    last_name: string){
 
     try {
       let queryText = `UPDATE "users" SET `;
@@ -183,12 +228,11 @@ export default class UserRepository {
     
       const res: IResponse<any> = {
         status: 200,
-        data: "Usuário atualizado com sucesso.",
+        data: result.rows[0],
       };
-    return res;
+      return res;
     
     } catch (err) {
-
       const res: IResponse<any> = {
         status: 500,
         errors: err,
@@ -196,10 +240,6 @@ export default class UserRepository {
       return res;
     }
   }
-
- 
-
-
 
   public async login(user: IUser): Promise<IResponse<IUser>> {
     try {
@@ -223,6 +263,14 @@ export default class UserRepository {
         values
       );
 
+      if (verifyUser.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "Usuário ou senha incorreto.",
+        };
+        return res;
+      }
+
       const res: IResponse<IUser> = {
         status: 201,
         data: verifyUser.rows[0],
@@ -237,5 +285,60 @@ export default class UserRepository {
       return res;
     }
   }
+    
+  public async delUserById(userId: string) : Promise<IResponse<IUser>> {
+    try {
+      const query = `DELETE FROM "users" WHERE id = $1 RETURNING *`;
+      const result = await this.db.pool.query(query, [userId]);
 
+      if (result.rowCount === 0) {
+        const res: IResponse<any> = {
+          status: 404,
+          errors: "Usuario não encontrado ou já deletado",
+        };
+        return res;
+      }
+
+      const res: IResponse<IUser> = {
+        status: 201,
+        data: result.rows[0]
+      };
+      return res
+
+    } catch (err) {
+      const res : IResponse<any> = {
+        status: 500,
+        errors: err,
+      };
+      return res;
+    }
+  }
+
+  public async removeUserFromSquad(userId: string) : Promise<IResponse<IUser>> {
+    try {
+      const query = `UPDATE "users" SET "squad" = null WHERE "id" = $1 RETURNING id, username, email, first_name, last_name, is_admin, squad`;
+      const result = await this.db.pool.query(query, [userId]);
+
+      if (result.rowCount === 0) {
+        const res : IResponse<any> = {
+          status: 404,
+          errors: `Usuário não encontrado ou não está designado a este time`
+        } 
+        return res;
+      }
+
+      const res : IResponse<any> = {
+        status: 200,
+        data: result.rows[0]
+      }
+      return res;
+
+      } catch (err) {
+        const res : IResponse<any> = {
+          status: 500,
+          errors: err,
+        }
+        return res;
+    }      
+  }
 }

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { IResponse, ISquad } from "../interfaces/interfaces";
 import SquadRepository from "../repositories/squadRepository";
-import UserRepository from "../repositories/userRepository";
+import { SquadValidator, Validator } from "../validators/validator";
 
 export default class SquadHandler {
   private repository: SquadRepository;
@@ -12,20 +12,22 @@ export default class SquadHandler {
 
   public async post(req: Request, res: Response) {
     const squad: ISquad = req.body;
+    const cookie = req.cookies['token'];
 
-    if (!squad || !squad.name || !squad.leader) {
-      res.status(400).json({ error: "Dados incompletos" });
-      return;
+    if (!cookie.is_admin) {
+      return res.status(400).json({ errors: "Somente administradores têm acesso" });
     }
 
-    const userRepository = new UserRepository();
-    const leader = await userRepository.getUserById(squad.leader);
-    if (leader.status !== 200 || !leader?.data?.is_admin)
-      return res.status(400).json({ error: "Usuário não é um administrador" });
+    if (!squad || !squad.name || squad.name == undefined ) {
+      return res.status(400).json({ error: "Verifique os Dados!" });
+    }
 
-    const response: IResponse<ISquad> = await this.repository.createSquad(
-      squad
-    );
+    const validate: SquadValidator = new SquadValidator (squad.name, squad.leader);
+    if (validate.fail){
+      return res.status(400).json({ error: validate.message });
+    }
+      
+    const response: IResponse<ISquad> = await this.repository.createSquad(squad);
 
     if (response.status === 201) {
       res.status(201).json(response.data);
@@ -35,12 +37,7 @@ export default class SquadHandler {
   }
 
   public async getAll(req: Request, res: Response) {
-
     const cookie = req.cookies['token'];
-
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
-    }
 
     if (cookie.is_admin === true || cookie.is_leader === true) {
       const squads: IResponse<Array<ISquad[]>> = await this.repository.getAllSquads();
@@ -59,10 +56,6 @@ export default class SquadHandler {
 
     const cookie = req.cookies['token'];
 
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
-    }
-
     if (cookie.is_admin === true || cookie.is_leader === true || cookie.squad === squadId) {
       const squad: IResponse<ISquad> = await this.repository.getSquadById(squadId);
 
@@ -78,55 +71,60 @@ export default class SquadHandler {
 
   public async getAllMembersSquad(req: Request, res: Response) {
     const squadId = req.params.team_id;
-
     const cookie = req.cookies['token'];
 
-    if (!cookie) {
-      return res.status(400).json({ errors: "Usuário deslogado" });
+    if(cookie.is_admin || cookie.squad === squadId){
+      const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(squadId);
+
+      if (squad.status !== 200){
+        return res.status(squad.status).json({ errors: squad.errors });
+      }
+        
+      return res.status(200).json(squad.data); 
     }
 
-    if (cookie.squad === null && cookie.is_admin === false) {
-      return res.status(400).json({ errors: "Usuário autenticado não pode ter acesso!" });
-    }
-
-    if (cookie.squad !== squadId && cookie.is_admin === false) {
-      return res.status(400).json({ errors: "Você não é membro deste time!" });
-    }
-
-    const squad: IResponse<ISquad> = await this.repository.getAllMembersSquad(
-      squadId
-    );
-
-    if (squad.status !== 200)
-      return res.status(squad.status).json({ errors: squad.errors });
-
-    res.status(200).json(squad.data);
+    return res.status(400).json({ errors: "Você não possui autorização para isso!" });
   }
   
   public async updateSquadById(req:Request, res:Response) {
     const cookie = req.cookies['token'];
     const squadId = req.params.team_id;
-    const { id } = req.params;  
-
-
-    if (!cookie) {
-      return res.status(400).json({ error: "Usuário deslogado" });
-    }
-
-    const squad = await this.repository.getSquadById(squadId);
-    console.log(squad.data?.leader, cookie.user_id);
-
     
-
-    if (!cookie.is_admin && squad.data?.leader != cookie.user_id ){
-      return res.status(400).json({ error: "Usuario não é admin ou lider desse time"})
+    if ((!cookie.is_admin && !cookie.is_leader) || (cookie.is_leader && cookie.squad !== squadId) ){
+      return res.status(400).json({ error: "Vôce não possui permissão para isso!"})
     }
     
-    const { teamName, leader } = req.body;
+    const { name, leader }: ISquad = req.body;
 
-    const response = await this.repository.updateTeamsInfos(teamName, leader, id);
+    if (!name || name == undefined || leader == undefined || !leader) {
+      return res.status(400).json({ error: "Dados incompletos" });
+    }
+
+    const validate: SquadValidator = new SquadValidator (name, leader);
+
+    if (validate.fail)
+    return res.status(400).json({ error: validate.message });
+
+    const response: IResponse<ISquad> = await this.repository.updateTeamsInfos(name, leader, squadId);
  
     res.status(response.status).json({messege: response.data});
+
+  }
+  
+  public async delSquadById (req: Request, res: Response) {
+    const teamId = req.params.teams_id;
+    const cookie = req.cookies['token'];
+
+    if (!cookie.is_admin) {
+      return res.status(400).json({ errors: "Somente administradores têm acesso!" });
+    }
+
+    const squad: IResponse<ISquad> = await this.repository.delSquadById(teamId);
+
+    if (squad.status !== 200) {
+      return res.status(squad.status).json({ errors: squad.errors });
+    }
+    res.status(200).json(squad.data);
 
   }
 }
