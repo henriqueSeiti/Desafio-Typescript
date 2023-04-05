@@ -15,7 +15,7 @@ export interface IUser {
 export interface ISquad {
   id?: UUID;
   name: string;
-  leader: UUID;
+  leader?: UUID;
 }
 
 export interface IResponse<T> {
