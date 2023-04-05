@@ -4,6 +4,7 @@ import { IResponse, IUser } from "../interfaces/interfaces";
 import SquadRepository from "../repositories/squadRepository";
 import UserRepository from "../repositories/userRepository";
 import { Validator } from "../validators/validator";
+import Squad from "../models/squad";
 
 
 export default class UserHandler {
@@ -80,8 +81,11 @@ export default class UserHandler {
 
     if (cookie.is_leader === true ) {
       const user: IResponse<IUser> = await this.repository.getUserByIdLeader(userId, cookie.squad);
-        if (user.status !== 200) return res.status(user.status).json({ errors: user.errors });
-        res.status(200).json(user.data);
+      if (user.status !== 200){
+        return res.status(user.status).json({ errors: user.errors })
+      };
+      
+      res.status(200).json(user.data);
     }
 
     else {
@@ -96,8 +100,8 @@ export default class UserHandler {
 
     const squadRepository = new SquadRepository();
 
-    if((!cookie.is_admin || !cookie.is_leader) || (cookie.is_leader && cookie.squad !== teamId)) {
-      return res.status(400).json({ errors: 'Usuário sem premissão.' })
+    if((!cookie.is_admin && !cookie.is_leader) || (cookie.is_leader && cookie.squad !== teamId)) {
+      return res.status(400).json({ errors: 'Usuário sem permissão.' })
     }
 
     const user = await this.repository.getUserById(userId);
@@ -150,7 +154,7 @@ export default class UserHandler {
   
   public async delUserById( req: Request, res: Response) {
     const cookie = req.cookies["token"];
-    const userId = req.params.userId;
+    const userId = req.params.user_id;
 
     if (cookie.is_admin === false) {
       return res.status(400).json({ errors: "Somente administradores têm acesso!" });
@@ -158,10 +162,10 @@ export default class UserHandler {
     
     const user : IResponse<IUser> = await this.repository.delUserById(userId);
 
-    if (user.status !== 200) {
+    if (user.status !== 201) {
       return res.status(user.status).json({ errors: user.errors });
     }
-    res.status(200).json(user.data);
+    res.status(201).json(user.data);
   }
 
   public async removeUserFromSquad( req: Request, res : Response ) {
@@ -169,7 +173,7 @@ export default class UserHandler {
     const userId = req.params.user_id;
     const squadId = req.params.team_id;
     
-    if ((!cookie.is_admin || !cookie.is_leader) || (cookie.is_leader && cookie.squad !== squadId)){
+    if ((!cookie.is_admin && !cookie.is_leader) || (cookie.is_leader && cookie.squad !== squadId)){
       return res.status(400).json({ error: "Você não possui permissão para isso!"})
     }
 

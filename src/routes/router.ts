@@ -10,7 +10,7 @@ const squad = new SquadHandler();
 // Rotas GET
 router.get("/users/me", tokenVerify, user.getMyData.bind(user));
 router.get("/users", tokenVerify, user.getAll.bind(user));
-router.get("/users/:user_id", tokenVerify, user.getById.bind(user));
+router.get("/users/:user_id", tokenVerify, user.getById.bind(user)); //ERROR
 router.get("/teams/", tokenVerify, squad.getAll.bind(squad));
 router.get("/teams/:team_id", tokenVerify, squad.getById.bind(squad));
 router.get("/teams/:team_id/members", tokenVerify, squad.getAllMembersSquad.bind(squad));

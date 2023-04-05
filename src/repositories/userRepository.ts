@@ -186,11 +186,11 @@ export default class UserRepository {
     userId: string,
     email: string,
     first_name: string,
-    last_name: string,
-  ){
+    last_name: string){
 
     try {
-      const queryText = `UPDATE "users" SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5, WHERE id = $6`;
+
+      const queryText = `UPDATE "users" SET username = $1, password = $2, email = $3, first_name = $4, last_name = $5 WHERE id = $6 RETURNING *`;
       const result : QueryResult<IUser> =await this.db.pool.query(queryText, [userName, password, email, first_name, last_name, userId]);
     
       const res: IResponse<any> = {
@@ -200,7 +200,6 @@ export default class UserRepository {
       return res;
     
     } catch (err) {
-
       const res: IResponse<any> = {
         status: 500,
         errors: err,
@@ -256,7 +255,7 @@ export default class UserRepository {
     
   public async delUserById(userId: string) : Promise<IResponse<IUser>> {
     try {
-      const query = `DELETE FROM "users" WHERE id = $1 RETURNING id, username, email, first_name, last_name, is_admin, squad`;
+      const query = `DELETE FROM "users" WHERE id = $1 RETURNING *`;
       const result = await this.db.pool.query(query, [userId]);
 
       if (result.rowCount === 0) {
@@ -269,7 +268,7 @@ export default class UserRepository {
 
       const res: IResponse<IUser> = {
         status: 201,
-        data: result.rows[0],
+        data: result.rows[0]
       };
       return res
 
