@@ -99,10 +99,6 @@ export default class UserRepository {
         FROM users
         WHERE squad = $1 AND id = $2;`;
         const resultqueryTwo = await this.db.pool.query(queryTextTwo, [userId, squadId]); 
-        const res: IResponse<IUser> = {
-          status: 200,
-          data: resultqueryTwo.rows[0],
-        };
         
         if (resultqueryTwo.rowCount === 0) {
           const res: IResponse<any> = {
@@ -111,7 +107,11 @@ export default class UserRepository {
           };
           return res;
         }
-        
+
+        const res: IResponse<IUser> = {
+          status: 200,
+          data: resultqueryTwo.rows[0],
+        }
         return res;
       } 
       else {

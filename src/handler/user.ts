@@ -75,8 +75,11 @@ export default class UserHandler {
 
     if (cookie.is_admin === true ) {
       const user: IResponse<IUser> = await this.repository.getUserById(userId);
-        if (user.status !== 200) return res.status(user.status).json({ errors: user.errors });
-        res.status(200).json(user.data);
+      if (user.status !== 200) {
+        return res.status(user.status).json({ errors: user.errors })
+      };
+
+      return res.status(200).json(user.data);
     } 
 
     if (cookie.is_leader === true ) {
@@ -85,7 +88,7 @@ export default class UserHandler {
         return res.status(user.status).json({ errors: user.errors })
       };
       
-      res.status(200).json(user.data);
+      return res.status(200).json(user.data);
     }
 
     else {
